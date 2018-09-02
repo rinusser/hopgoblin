@@ -60,7 +60,7 @@ func CreateSimpleResponse(code uint16) *Response {
 }
 
 /*
-  Parses a string into an Response instance.
+  Parses a string into a Response instance.
  */
 func ParseResponse(input string) Response {
   var rv Response
@@ -75,7 +75,7 @@ func ParseResponse(input string) Response {
 }
 
 /*
-  Generates a string representation of an Response instance into a string ready for transmission.
+  Generates a string representation of a Response instance into a string ready for transmission.
  */
 func (response *Response) ToString() string {
   var rvs strings.Builder

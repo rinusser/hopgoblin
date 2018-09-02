@@ -40,10 +40,15 @@ First you'll need to fetch the sources:
 
     go get github.com/rinusser/hopgoblin
 
-This will add the application to src/github.com/rinusser/hopgoblin/ in your GOPATH. Regardless of whether you use the included
-Makefile or not, you'll need to install a dependency to be able to run tests:
+This will add the application to src/github.com/rinusser/hopgoblin/ in your GOPATH. All following paths in these installation
+instructions are relative to this directory.
+
+Regardless of whether you use the included Makefile or not, you'll need to install a dependency to be able to run tests:
 
     go get github.com/stretchr/testify
+
+You will need an SSL keypair to handle HTTPS connections: add the certificate as resources/certs/test.pem and the keyfile as
+resources/certs/test.key. These files (along with SSL support) will be made optional later (#4).
 
 ### GNU Make
 

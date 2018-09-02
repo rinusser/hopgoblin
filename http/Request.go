@@ -21,7 +21,7 @@ type Request struct {
 }
 
 /*
-  Parses a string into an Request instance.
+  Parses a string into a Request instance.
  */
 func ParseRequest(input string) *Request {
   var rv Request
@@ -40,7 +40,7 @@ func ParseRequest(input string) *Request {
 }
 
 /*
-  Turns an Request instance into a string, ready for transmission to a server.
+  Turns a Request instance into a string, ready for transmission to a server.
  */
 func (request *Request) ToString() string {
   var rvs strings.Builder

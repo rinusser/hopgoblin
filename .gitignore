@@ -1,3 +1,4 @@
 /build/*
 /resources/certs/*
 /check-private.sh
+!.gitkeep
