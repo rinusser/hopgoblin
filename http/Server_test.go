@@ -147,13 +147,18 @@ func TestServerDirect(t *testing.T) {
 func runServerDirectTest(t *testing.T, port int, url string, expectation string) {
   server,client:=runServer(port)
   defer func() { server.Shutdown<-true }()
+  if !server.SupportsEncryption && url[0:8]=="https://" {
+    log.Warn("skipping test case: encryption not supported")
+    return
+  }
   runServerDirectAssertions(t,client,port,url,expectation)
 }
 
 func runServerDirectAssertions(t *testing.T, client *go_http.Client, port int, url string, expectation string) {
   response,err:=client.Get(url)
-  defer response.Body.Close()
   assert.Nil(t,err,"http request should have succeeded")
+  if err==nil { return }
+  defer response.Body.Close()
   assert.Equal(t,"200 OK",response.Status,"HTTP status")
   body,err:=ioutil.ReadAll(response.Body)
   assert.Nil(t,err,"reading body failed")
@@ -206,6 +211,10 @@ func TestServerHTTPSProxyChunked(t *testing.T) {
 func runServerProxyTest(t *testing.T, port int, url string, expected []string, expected_body *string) {
   server,client:=runServer(port)
   defer func() { server.Shutdown<-true }()
+  if !server.SupportsEncryption && url[0:8]=="https://" {
+    log.Warn("skipping test case: encryption not supported")
+    return
+  }
 
   proxyrunner:=dummyproxy.NewDummyProxyRunner()
   err:=proxyrunner.Start()
@@ -276,6 +285,10 @@ func runAbortTest(t *testing.T, num int) {
   port:=64100+num
   server,client:=runServer(port)
   defer func() { server.Shutdown<-true }()
+  if !server.SupportsEncryption {
+    log.Warn("skipping test case: encryption not supported")
+    return
+  }
 
   proxyrunner:=dummyproxy.NewDummyProxyRunner()
   err:=proxyrunner.Start()

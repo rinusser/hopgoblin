@@ -48,7 +48,8 @@ Regardless of whether you use the included Makefile or not, you'll need to insta
     go get github.com/stretchr/testify
 
 You will need an SSL keypair to handle HTTPS connections: add the certificate as resources/certs/test.pem and the keyfile as
-resources/certs/test.key. These files (along with SSL support) will be made optional later (#4).
+resources/certs/test.key. Alternatively you can disable HTTPS support by editing resources/application.ini and commenting out
+the server.default\_certificate\_file setting.
 
 ### GNU Make
 

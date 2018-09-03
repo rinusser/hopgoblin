@@ -7,7 +7,6 @@ import (
   "bufio"
   "crypto/tls"
   "errors"
-  "fmt"
   "net"
   "regexp"
   "strings"
@@ -21,11 +20,12 @@ import (
   HTTP Server type: will listen for incoming connections, acting like a proxy server.
  */
 type Server struct {
-  listener net.Listener //will be set to low-level socket listener
+  listener net.Listener      //will be set to low-level socket listener
   siteHandlers []SiteHandler //list of site handlers; register with AddSiteHandler()
-  Shutdown chan bool    //used to shut down the server instance during tests
-  *ProxySettings        //upstream proxy settings
-  tlsconfig tls.Config
+  Shutdown chan bool         //used to shut down the server instance during tests
+  *ProxySettings             //upstream proxy settings
+  SupportsEncryption bool    //whether SSL/TLS support is enabled
+  tlsconfig tls.Config       //the TLS configuration to use for incoming connections
 }
 
 /*
@@ -36,25 +36,35 @@ func NewServer() *Server {
     listener: nil,
     Shutdown: make(chan bool),
     ProxySettings: GetDefaultProxySettings(),
+    SupportsEncryption: false,
   }
 
+  rv.loadTLSConfig()
+
+  return rv
+}
+
+func (this *Server) loadTLSConfig() {
+  this.SupportsEncryption=false
   resdir:=utils.GetResourceDir("certs")
-  certfile:=utils.GetConfigValue("server.default_certificate_file")
-  keyfile:=utils.GetConfigValue("server.default_certificate_key")
-  if certfile=="" || keyfile=="" { panic("need to set default TLS certificate and key files in application config") }
-  default_cert,err:=tls.LoadX509KeyPair(resdir+certfile,resdir+keyfile)
-  if err!=nil {
-    panic(fmt.Sprintf("error loading default keypair: %s",err))
+  certname:=utils.GetConfigValue("server.default_certificate_file")
+  if certname=="" {
+    log.Warn("no default TLS certificate name set, disabling encryption support")
+    return
   }
 
-  rv.tlsconfig=tls.Config {
-    Certificates: []tls.Certificate{default_cert},
+  default_cert:=utils.LoadCertificate(resdir,certname)
+  if default_cert==nil {
+    return
+  }
+
+  this.tlsconfig=tls.Config {
+    Certificates: []tls.Certificate{*default_cert},
     ClientAuth: tls.VerifyClientCertIfGiven,
     NameToCertificate: map[string]*tls.Certificate{},
     ServerName: "hopgoblin.localhost",
   }
-
-  return rv
+  this.SupportsEncryption=true
 }
 
 
@@ -64,9 +74,11 @@ func NewServer() *Server {
 func (this *Server) AddSiteHandler(h SiteHandler) {
   this.siteHandlers=append(this.siteHandlers,h)
 
-  for host,cert:=range h.GetCertificateMap() {
-    this.tlsconfig.Certificates=append(this.tlsconfig.Certificates,*cert)
-    this.tlsconfig.NameToCertificate[host]=cert
+  if this.SupportsEncryption {
+    for host,cert:=range h.GetCertificateMap() {
+      this.tlsconfig.Certificates=append(this.tlsconfig.Certificates,*cert)
+      this.tlsconfig.NameToCertificate[host]=cert
+    }
   }
 }
 
@@ -146,9 +158,16 @@ func (server *Server) handleConnection(conn net.Conn) {
   }
 
   response:=NewResponse()
+  deny_reason:=""
   if handler==nil {
+    deny_reason="no handler"
+  } else if !server.SupportsEncryption && request.Method=="CONNECT" {
+    deny_reason="encryption disabled"
+  }
+
+  if deny_reason!="" {
     if host!="detectportal.firefox.com" {
-      log.Debug("denied %s to %s",request.Method,request.Url)
+      log.Debug("denied %s to %s (%s)",request.Method,request.Url,deny_reason)
     }
     response.Status=403
     response.Body=[]byte("go away")
