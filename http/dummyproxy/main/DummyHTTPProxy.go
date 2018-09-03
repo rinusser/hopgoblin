@@ -88,11 +88,16 @@ func (proxy *DummyHTTPProxy) handleConnection(conn net.Conn) error {
       return nil
     }
 
-    text,err:=http.ReadHTTPMessageAsString(buf)
+    text,err=http.ReadHTTPMessageAsString(buf)
     if err!=nil {
       return err
     }
     fmt.Println(text)
+  }
+
+  if strings.Index(text,"/delayed")>=0 {
+    log.Debug("got delay request")
+    time.Sleep(2e9)
   }
 
   buf.WriteString("HTTP/1.1 418 I'm a teapot\r\n")
@@ -107,6 +112,7 @@ func (proxy *DummyHTTPProxy) handleConnection(conn net.Conn) error {
   if strings.Index(text,"/chunked")>=0 {
     body=http.ChunkEncodeBody(text,1,1)
   }
+
   buf.Write(body)
 //  fmt.Fprintln(os.Stderr,[]byte(body))
 //  log.Trace("last 3 bytes in body: %X",body[len(body)-3:])

@@ -6,6 +6,7 @@ package http
 import (
   "bufio"
   "crypto/tls"
+  "errors"
   "fmt"
   "net"
   "regexp"
@@ -90,7 +91,7 @@ func (server *Server) Listen(port uint16) error {
   listener,err:=net.ListenTCP("tcp",&addr)
   server.listener=listener
   if err!=nil {
-    log.Error("unable to listen on port %d",port)
+    log.Fatal("unable to listen on port %d",port)
     return err
   }
   log.Debug("listening on %s.\n",listener.Addr().String())
@@ -200,13 +201,13 @@ func (this *Server) UpgradeServerConnectionToSSL(conn net.Conn, host string) (ne
 func (server *Server) startSSLServer(conn net.Conn, host string) (*bufio.ReadWriter,*Request,error) {
   _,buf,err:=server.UpgradeServerConnectionToSSL(conn,host)
   if err!=nil {
-    log.Warn("TLS handshake failed: %s",err)
+    log.Debug("TLS handshake failed: %s",err)
     return nil,nil,err
   }
 
   request,err:=server.readRequest(buf)
   if err!=nil {
-    log.Warn("could not read TLS'd request: %s",err)
+    log.Debug("could not read TLS'd request: %s",err)
     return nil,nil,err
   }
   request.Is_ssl=true
@@ -221,7 +222,11 @@ func (server *Server) readRequest(buf *bufio.ReadWriter) (*Request,error) {
   }
 
   request:=ParseRequest(request_text)
-  return request,nil
+  if request!=nil {
+    return request,nil
+  } else {
+    return nil,errors.New("could not parse request")
+  }
 }
 
 /*
@@ -230,11 +235,11 @@ func (server *Server) readRequest(buf *bufio.ReadWriter) (*Request,error) {
 func (server *Server) WriteAndFlush(buf *bufio.ReadWriter, response string) error { //TODO: why public?
   _,err:=buf.WriteString(response)
   if err!=nil {
-    log.Error("can't write to connection",err)
+    log.Debug("can't write to connection",err)
   }
   err=buf.Flush()
   if err!=nil {
-    log.Error("flush failed",err)
+    log.Debug("flush failed",err)
   }
   return err
 }

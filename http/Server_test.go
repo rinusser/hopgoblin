@@ -10,6 +10,7 @@ import (
   "crypto/tls"
   "fmt"
   "io/ioutil"
+  "net"
   go_http "net/http"
   "net/url"
   "os"
@@ -146,7 +147,10 @@ func TestServerDirect(t *testing.T) {
 func runServerDirectTest(t *testing.T, port int, url string, expectation string) {
   server,client:=runServer(port)
   defer func() { server.Shutdown<-true }()
+  runServerDirectAssertions(t,client,port,url,expectation)
+}
 
+func runServerDirectAssertions(t *testing.T, client *go_http.Client, port int, url string, expectation string) {
   response,err:=client.Get(url)
   defer response.Body.Close()
   assert.Nil(t,err,"http request should have succeeded")
@@ -250,4 +254,65 @@ func findRequestLines(input string) []string {
 
 func findLastBody(input string) string {
   return input[strings.LastIndex(input,"\r\n\r\n")+4:]
+}
+
+
+/*
+  Makes sure aborted connections are handled gracefully.
+
+  More cases could be added, supposing it's possible to even trigger them with Go. A separate dummyclient could be created again,
+  maybe that'd help reaching more server error states.
+
+  TODO: Closing the client connection before the upstream response is received should trigger an error in the server but doesn't.
+        This can definitely be triggered with a browser - why not here?
+ */
+func TestConnectionAborts(t *testing.T) {
+  runAbortTest(t,0)
+  runAbortTest(t,1)
+  runAbortTest(t,99)
+}
+
+func runAbortTest(t *testing.T, num int) {
+  port:=64100+num
+  server,client:=runServer(port)
+  defer func() { server.Shutdown<-true }()
+
+  proxyrunner:=dummyproxy.NewDummyProxyRunner()
+  err:=proxyrunner.Start()
+  if err!=nil { panic(err) }
+  server.ProxySettings=NewProxySettings("127.0.0.1",64086)
+
+  openAbortedConnection(t,port,num)
+  runServerDirectAssertions(t,client,port,"http://direct.local/no_encoding/http","http://direct.local/no_encoding/http")
+}
+
+func openAbortedConnection(t *testing.T, port int, num int) {
+  step:=0
+
+  log.Trace("running step %d...",step)
+  conn,err:=net.Dial("tcp",fmt.Sprintf("127.0.0.1:%d",port))
+  assert.Nil(t,err)
+  defer conn.Close()
+  conn.Write([]byte("CONNECT proxied.local:443 HTTP/1.1\r\n\r\n"))
+  if step++;num<step { return }
+
+  time.Sleep(5e8)
+  log.Trace("running step %d...",step)
+  raw_buf:=bufio.NewReadWriter(bufio.NewReader(conn),bufio.NewWriter(conn))
+  ReadHTTPMessageAsString(raw_buf)
+  tlsconfig:=&tls.Config {
+    InsecureSkipVerify:true,
+    ServerName:"direct.local",
+  }
+  tlsconn:=tls.Client(conn,tlsconfig)
+  tlsconn.Write([]byte("GET /no_encoding/delayed HTTP/1.1"))
+  if step++;num<step { return }
+
+  time.Sleep(5e8)
+  log.Trace("running step %d...",step)
+  tlsconn.Write([]byte("\r\nHost: dummyproxy\r\n\r\n"))
+  log.Trace("force closing connection...");
+  tlsconn.Close()
+  conn.Close()
+  time.Sleep(5e9)
 }
