@@ -323,7 +323,7 @@ func openAbortedConnection(t *testing.T, port int, num int) {
 
   time.Sleep(5e8)
   log.Trace("running step %d...",step)
-  tlsconn.Write([]byte("\r\nHost: dummyproxy\r\n\r\n"))
+  tlsconn.Write([]byte("\r\nHost: proxied.local\r\n\r\n"))
   log.Trace("force closing connection...");
   tlsconn.Close()
   conn.Close()

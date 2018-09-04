@@ -21,8 +21,9 @@ import (
   HTTP client for outgoing connections.
  */
 type Client struct {
-  conn net.Conn
-  *ProxySettings
+  conn net.Conn                      //the outgoing connection
+  *ProxySettings                     //proxy settings to use
+  EnableCertificateVerification bool //whether remote certificates should be verified
 }
 
 /*
@@ -31,6 +32,7 @@ type Client struct {
 func NewClient() *Client {
   return &Client {
     ProxySettings:GetDefaultProxySettings(),
+    EnableCertificateVerification:true,
   }
 }
 
@@ -110,7 +112,7 @@ func (client *Client) ForwardRequest(request Request) (*Response,error) {
     }
 
     tlsconfig:=&tls.Config{
-      InsecureSkipVerify:true, //TODO: probably set this per target host
+      InsecureSkipVerify:!client.EnableCertificateVerification,
       ServerName:host,
       RootCAs:GetCertificatePool(),
     }

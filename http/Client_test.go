@@ -6,6 +6,9 @@ package http
 import (
   "testing"
   "github.com/stretchr/testify/assert"
+  "crypto/x509"
+  "time"
+  "github.com/rinusser/hopgoblin/http/dummyproxy"
 )
 
 
@@ -35,4 +38,50 @@ func assertProxySettings(t *testing.T, client *Client, host string, port int, me
   assert.NotNil(t,client.ProxySettings,message+" (reference)")
   assert.Equal(t,host,client.ProxySettings.Host,message+" (host)")
   assert.Equal(t,port,client.ProxySettings.Port,message+" (port)")
+}
+
+
+/*
+  Makes sure certificate hostname mismatches throw errors only if .EnableCertificateVerification is true
+ */
+func TestCertificateVerificationSetting(t *testing.T) {
+  proxyrunner:=dummyproxy.NewDummyProxyRunner()
+  err:=proxyrunner.Start()
+  if err!=nil { panic(err) }
+  time.Sleep(5e8)
+
+  client:=NewClient()
+  client.ProxySettings=NewProxySettings("127.0.0.1",64086)
+
+  request:=Request {
+    Method:"GET",
+    Url:"/no_encoding/certcheck",
+    Is_ssl:true,
+    message: message {
+      Protocol: "HTTP/1.1",
+      Headers: NewHeaders(),
+    },
+  }
+
+  client.EnableCertificateVerification=true
+  request.Headers.Set("Host","invalidhost.localhost")
+  response,err:=client.ForwardRequest(request);
+
+  assert.NotNil(t,err)
+  err,ok:=err.(x509.HostnameError)
+  assert.True(t,ok)
+  assert.Nil(t,response)
+
+  proxyrunner.Port=64087
+  err=proxyrunner.Start()
+  if err!=nil { panic(err) }
+  time.Sleep(5e8)
+
+  client.ProxySettings.Port=64087
+  client.EnableCertificateVerification=true
+  request.Headers.Set("Host","proxied.local")
+  response,err=client.ForwardRequest(request);
+
+  assert.Nil(t,err)
+  assert.NotNil(t,response)
 }

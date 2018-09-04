@@ -48,8 +48,13 @@ Regardless of whether you use the included Makefile or not, you'll need to insta
     go get github.com/stretchr/testify
 
 You will need an SSL keypair to handle HTTPS connections: add the certificate as resources/certs/test.pem and the keyfile as
-resources/certs/test.key. Alternatively you can disable HTTPS support by editing resources/application.ini and commenting out
-the server.default\_certificate\_file setting.
+resources/certs/test.key. The certificate needs to be valid for at least `direct.local` and `proxied.local` - to easily identify it
+it's recommended to use a distinct DN (or first alt name), e.g. `hopgoblin.localhost`. You'll need to add the CA you signed your
+certificate(s) with into the resources/certs/ directory, its filename must start with "CA-", otherwise the automated tests will
+fail.
+
+Alternatively you can disable HTTPS support by editing resources/application.ini and commenting out the
+server.default\_certificate\_file setting.
 
 ### GNU Make
 
