@@ -15,40 +15,11 @@ import (
 
 
 /*
-  Makes sure ParseArguments() can handle both multiple arguments and comma-separated values.
- */
-func TestParseArguments(t *testing.T) {
-  input:=[]string {
-    "*=DEBUG",
-    "pkg1=TRACE,pkg2=INFO,pkg3=OFF",
-  }
-  expected:=map[string]Level {
-    "*":DEBUG,
-    "pkg1":TRACE,
-    "pkg2":INFO,
-    "pkg3":OFF,
-  }
-  assert.Equal(t,expected,ParseArguments(input).prefixes)
-}
-
-/*
-  Makes sure ParseArguments() reads a value without prefix as the global setting.
- */
-func TestParseArgumentsWithoutKey(t *testing.T) {
-  input:=[]string { "WARN,a=OFF" }
-  expected:=map[string]Level {
-    "*":WARN,
-    "a":OFF,
-  }
-  assert.Equal(t,expected,ParseArguments(input).prefixes,"setting without prefix")
-}
-
-/*
   Makes sure log prefixes are matched correctly, and in the correct order (longer first).
  */
 func TestGetEffectiveLevel(t *testing.T) {
   settings:=NewSettings()
-  settings.prefixes=map[string]Level {
+  settings.Prefixes=map[string]Level {
     "*":TRACE,
     "package.type.func1":DEBUG,
     "package.type":INFO,
@@ -67,7 +38,7 @@ func TestGetEffectiveLevel(t *testing.T) {
  */
 func TestAssembleLogSettingsArg(t *testing.T) {
   input:=NewSettings()
-  input.prefixes=map[string]Level {
+  input.Prefixes=map[string]Level {
     "zzz/":OFF,
     "*":DEBUG,
     "http/":OFF,

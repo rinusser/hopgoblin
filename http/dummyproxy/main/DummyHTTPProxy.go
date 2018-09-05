@@ -27,6 +27,7 @@ import (
   "github.com/rinusser/hopgoblin/bootstrap"
   "github.com/rinusser/hopgoblin/http"
   "github.com/rinusser/hopgoblin/log"
+  _ "github.com/rinusser/hopgoblin/log/appconfig" //keep: allows log configuration in application.ini
 )
 
 

@@ -21,7 +21,7 @@ func readHTTPMessageHeader(buf *bufio.ReadWriter, builder *strings.Builder) erro
       log.Trace("got EOF, stopping read")
       break
     } else if err!=nil {
-      log.Error("can't read from buffer: %v",err)
+      log.Error("can't read from buffer: %v",err) //TODO: write test to trigger this, then reduce severity
       return err
     }
 //    fmt.Println("ReadHTTPMessageAsString: got line: ",strings.TrimSpace(line))

@@ -31,3 +31,37 @@ func GetConfigValue(key string) string {
   value,_:=(*appConfiguration)[strings.ToLower(key)]
   return value
 }
+
+
+/*
+  Fetches key/value pairs from the application configuration.
+
+  Keys are returned without the prefix, for example reading the configuration
+
+    [log]
+    levels.pkg1 = trace
+    levels.pkg2 = off
+
+  with prefix "log.levels." will result in this:
+
+    map[string]string {
+      "pkg1":"trace",
+      "pkg2":"off",
+    }
+   */
+func GetConfigValuesByPrefix(prefix string) map[string]string {
+  rv:=make(map[string]string)
+  if appConfiguration==nil {
+    return rv
+  }
+
+  prefix_length:=len(prefix)
+  prefix=strings.ToLower(prefix)
+  for key,value:=range *appConfiguration {
+    if strings.HasPrefix(key,prefix) {
+      rv[key[prefix_length:]]=value
+    }
+  }
+
+  return rv
+}

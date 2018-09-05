@@ -12,7 +12,8 @@ import (
   Type for log settings.
  */
 type Settings struct {
-  prefixes map[string]Level
+  Prefixes map[string]Level
+  TimestampFormat string
 }
 
 /*
@@ -20,7 +21,8 @@ type Settings struct {
  */
 func NewSettings() Settings {
   return Settings {
-    prefixes:make(map[string]Level,0),
+    Prefixes:make(map[string]Level,0),
+    TimestampFormat:"",
   }
 }
 
@@ -29,11 +31,29 @@ func NewSettings() Settings {
  */
 func (this *Settings) getSortedPrefixes() []string { //XXX: could cache this
   keys:=make([]string,0)
-  for key,_:=range this.prefixes {
+  for key,_:=range this.Prefixes {
     keys=append(keys,key)
   }
   sort.Sort(prefixesType(keys))
   return keys
+}
+
+
+/*
+  Takes 2 sets of settings and combines them, with settings in the second parameter (s2) taking precedence.
+ */
+func MergeSettings(s1 Settings, s2 Settings) Settings {
+  rv:=s1
+
+  for key,value:=range s2.Prefixes {
+    rv.Prefixes[key]=value
+  }
+
+  if s2.TimestampFormat!="" {
+    rv.TimestampFormat=s2.TimestampFormat
+  }
+
+  return rv
 }
 
 
