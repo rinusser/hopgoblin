@@ -96,7 +96,8 @@ By default the server will listen on TCP port 64080 - enter localhost:64080 as y
 
 # Tests
 
-Contains automated unit and integration tests. The test code contains a lot of intentional sleep time - the entire test suite can easily take 30+ seconds to finish.
+Contains automated unit and integration tests. The test code contains a lot of intentional sleep time - the entire test
+suite currently takes about a minute to finish.
 
 ### GNU Make
 

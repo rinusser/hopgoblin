@@ -1,43 +1,27 @@
 // Copyright 2018 Richard Nusser
 // Licensed under GPLv3 (see http://www.gnu.org/licenses/)
 
-/*
-  HTTP server imitating a proxy.
-  Doesn't forward requests anywhere, instead responds with status 200 to CONNECT requests and status 418 to everything else.
-  All incoming requests are printed to stdout, log messages to stderr.
-
-  By default listens on TCP port 64086 - this can be changed with a command-line argument:
-
-    dummyproxy --port <number>
-
-  As this is intended for automated tests, the server will only handle one connection and then exit. There's a test helper
-  (hopgoblin/http/dummyproxy.DummyProxyRunner) that simplifies usage in tests.
-
-  See main() function on how to embed this server into another application without starting it in a separate process.
- */
 package main
 
 import (
   "bufio"
-  "flag"
   "fmt"
   "net"
+  "os"
   "strings"
   "time"
-  "github.com/rinusser/hopgoblin/bootstrap"
   "github.com/rinusser/hopgoblin/http"
   "github.com/rinusser/hopgoblin/log"
-  _ "github.com/rinusser/hopgoblin/log/appconfig" //keep: allows log configuration in application.ini
 )
-
-
-var port=flag.Int("port",64086,"TCP port to listen on")
 
 
 /*
   DummyHTTPProxy type.
- */
-type DummyHTTPProxy struct { //TODO: move to http/dummyproxy package
+
+  This would be better suited in the "dummyproxy" package, but needs parts of the "http" package. In package http's tests this
+  results in import loops. So either the http package needs to be messed up, or this - better this.
+*/
+type DummyHTTPProxy struct {
 }
 
 /*
@@ -55,11 +39,14 @@ func (proxy *DummyHTTPProxy) Listen(port int) error {
   addr:=net.TCPAddr{net.IPv4(127,0,0,1),port,""}
   listener,err:=net.ListenTCP("tcp",&addr)
   if err!=nil {
+    log.Error("proxy listener error: %s",err)
     return err
   }
+  port=listener.Addr().(*net.TCPAddr).Port
+  fmt.Fprintf(os.Stderr,"port: %d\n",port)
 
   listener.SetDeadline(time.Now().Add(60e9))
-  log.Info("waiting for connection on port %d",port)
+  log.Debug("waiting for connection on port %d",port)
   conn,err:=listener.AcceptTCP()
   if err!=nil {
     log.Error("proxy error: ",err)
@@ -120,19 +107,4 @@ func (proxy *DummyHTTPProxy) handleConnection(conn net.Conn) error {
 
   buf.Flush()
   return nil
-}
-
-
-func main() {
-  bootstrap.Init()
-  proxy:=NewHTTPProxy()
-  proxy.Listen(findPort())
-}
-
-
-func findPort() int {
-  if *port<1 || *port>65535 {
-    panic(fmt.Sprintf("got invalid port number '%d'",*port))
-  }
-  return *port
 }

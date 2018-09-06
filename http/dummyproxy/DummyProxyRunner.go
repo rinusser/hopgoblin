@@ -4,6 +4,7 @@
 package dummyproxy
 
 import (
+  "bufio"
   "fmt"
   "io"
   "io/ioutil"
@@ -67,7 +68,36 @@ func (this *DummyProxyRunner) Start() error {
 
   this.stdout,_=proc.StdoutPipe()
   this.stderr,_=proc.StderrPipe()
-  return proc.Start()
+  err:=proc.Start()
+
+  if err==nil {
+    reader:=bufio.NewReader(this.stderr)
+    first_line,_:=reader.ReadString('\n')
+    if strings.HasPrefix(first_line,"port:") {
+      portstr:=strings.TrimSpace(first_line[5:])
+      fmt.Sscanf(portstr,"%d",&this.Port)
+    }
+  }
+  return err
+}
+
+
+/*
+  Start the dummy proxy on a random port.
+  Will panic if proxy didn't start.
+
+  The port the proxy was started can either be read from this method's return value, or from the .Port field.
+ */
+func (this *DummyProxyRunner) StartRandom() int {
+  this.Port=0
+  err:=this.Start()
+  if err!=nil {
+    panic(err)
+  }
+  if this.Port==0 {
+    panic("proxy didn't start")
+  }
+  return this.Port
 }
 
 

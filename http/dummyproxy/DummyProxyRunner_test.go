@@ -38,6 +38,31 @@ func TestDummyProxyRunnerPortArgument(t *testing.T) {
 //  proxyrunner.ReadAndWait()
 }
 
+
+/*
+  Makes sure the server can run in parallel on multiple, random ports
+ */
+func TestStartRandom(t *testing.T) {
+  count:=5
+  ports:=[]int{}
+
+  for tc:=1;tc<=count;tc++ {
+    ports=append(ports,setupStartRandomTest(t,tc))
+  }
+
+  for _,port:=range ports {
+    expectSuccess(t,port)
+  }
+}
+
+func setupStartRandomTest(t *testing.T, index int) int {
+  runner:=NewDummyProxyRunner()
+  port:=runner.StartRandom()
+  assert.Equal(t,port,runner.Port,"return value should match .Port field, index "+string(index))
+  return port
+}
+
+
 func performRequest(port int) (*go_http.Response,error) {
   transport:=&go_http.Transport {
     Dial: (&net.Dialer{

@@ -46,12 +46,11 @@ func assertProxySettings(t *testing.T, client *Client, host string, port int, me
  */
 func TestCertificateVerificationSetting(t *testing.T) {
   proxyrunner:=dummyproxy.NewDummyProxyRunner()
-  err:=proxyrunner.Start()
-  if err!=nil { panic(err) }
+  proxyrunner.StartRandom()
   time.Sleep(5e8)
 
   client:=NewClient()
-  client.ProxySettings=NewProxySettings("127.0.0.1",64086)
+  client.ProxySettings=NewProxySettings("127.0.0.1",proxyrunner.Port)
 
   request:=Request {
     Method:"GET",
@@ -72,12 +71,10 @@ func TestCertificateVerificationSetting(t *testing.T) {
   assert.True(t,ok)
   assert.Nil(t,response)
 
-  proxyrunner.Port=64087
-  err=proxyrunner.Start()
-  if err!=nil { panic(err) }
+  proxyrunner.StartRandom()
   time.Sleep(5e8)
 
-  client.ProxySettings.Port=64087
+  client.ProxySettings.Port=proxyrunner.Port
   client.EnableCertificateVerification=true
   request.Headers.Set("Host","proxied.local")
   response,err=client.ForwardRequest(request);

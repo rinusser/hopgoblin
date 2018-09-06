@@ -217,10 +217,8 @@ func runServerProxyTest(t *testing.T, port int, url string, expected []string, e
   }
 
   proxyrunner:=dummyproxy.NewDummyProxyRunner()
-  err:=proxyrunner.Start()
-  if err!=nil { panic(err) }
-
-  server.ProxySettings=NewProxySettings("127.0.0.1",64086)
+  proxyrunner.StartRandom()
+  server.ProxySettings=NewProxySettings("127.0.0.1",proxyrunner.Port)
 
   time.Sleep(5e8)
 
@@ -291,9 +289,8 @@ func runAbortTest(t *testing.T, num int) {
   }
 
   proxyrunner:=dummyproxy.NewDummyProxyRunner()
-  err:=proxyrunner.Start()
-  if err!=nil { panic(err) }
-  server.ProxySettings=NewProxySettings("127.0.0.1",64086)
+  proxyrunner.StartRandom()
+  server.ProxySettings=NewProxySettings("127.0.0.1",proxyrunner.Port)
 
   openAbortedConnection(t,port,num)
   runServerDirectAssertions(t,client,port,"http://direct.local/no_encoding/http","http://direct.local/no_encoding/http")
