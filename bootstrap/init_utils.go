@@ -10,7 +10,7 @@ import (
 
 type hookType func()
 
-var after_flag_parse_hooks []hookType
+var afterFlagParseHooks []hookType
 
 
 /*
@@ -18,7 +18,7 @@ var after_flag_parse_hooks []hookType
   Put initialization code that acts upon command-line arguments there.
  */
 func AfterFlagParse(hook hookType) {
-  after_flag_parse_hooks=append(after_flag_parse_hooks,hook)
+  afterFlagParseHooks=append(afterFlagParseHooks,hook)
 }
 
 
@@ -29,7 +29,7 @@ func AfterFlagParse(hook hookType) {
  */
 func Init() {
   flag.Parse()
-  for _,f:=range after_flag_parse_hooks {
+  for _,f:=range afterFlagParseHooks {
     f()
   }
 }

@@ -17,7 +17,7 @@ import (
 )
 
 
-var proxycmd string="../../build/dummyproxy" //value will be changed by initHook()
+var proxyPath string="../../build/dummyproxy" //value will be changed by initHook()
 
 
 func init() {
@@ -25,14 +25,14 @@ func init() {
 }
 
 func initHook() {
-  proxycmd=utils.GetApplicationDir()+utils.GetConfigValue("test.proxy_executable_basename")
+  proxyPath=utils.GetApplicationDir()+utils.GetConfigValue("test.proxy_executable_basename")
   executable,err:=os.Executable()
   if err!=nil {
     return
   }
   pos:=strings.LastIndex(executable,".")
   if pos>1 && executable[pos:]!=".test" {
-    proxycmd+=executable[pos:]
+    proxyPath+=executable[pos:]
   }
 }
 
@@ -63,7 +63,7 @@ func NewDummyProxyRunner() DummyProxyRunner {
   Will spawn a new process that waits and handles one connection, then exits.
  */
 func (this *DummyProxyRunner) Start() error {
-  proc:=exec.Command(proxycmd,fmt.Sprintf("--port=%d",this.Port),log.AssemblePassthroughArg())
+  proc:=exec.Command(proxyPath,fmt.Sprintf("--port=%d",this.Port),log.AssemblePassthroughArg())
   this.proc=proc
 
   this.stdout,_=proc.StdoutPipe()

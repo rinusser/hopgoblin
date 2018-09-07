@@ -14,9 +14,9 @@ import (
   Represents a single HTTP request.
  */
 type Request struct {
-  Method string              //e.g. "PUT"
-  Url string                 //e.g. "/api/items/new"
-  Is_ssl bool                //e.g. true
+  Method string  //e.g. "PUT"
+  Url string     //e.g. "/api/items/new"
+  IsSSL bool     //e.g. true
   message
 }
 
@@ -34,7 +34,7 @@ func ParseRequest(input string) *Request {
   rv.Method,rv.Url,rv.Protocol=message.firstLineParts[0],message.firstLineParts[1],message.firstLineParts[2]
   rv.Headers=message.Headers
   rv.Body=message.Body
-  rv.Is_ssl=false //XXX should this check for "https" in URL?
+  rv.IsSSL=false //XXX should this check for "https" in URL?
 
   return &rv
 }

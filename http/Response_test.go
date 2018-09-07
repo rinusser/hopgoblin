@@ -54,14 +54,14 @@ func TestResponseToString(t *testing.T) {
   Makes sure CreateSimpleResponse() can create a response with known status codes and returns nil for unknown codes.
  */
 func TestCreateSimpleResponse(t *testing.T) {
-  response:=CreateSimpleResponse(200);
+  response:=CreateSimpleResponse(200)
   assert.Equal(t,uint16(200),response.Status)
 
-  response=CreateSimpleResponse(403);
+  response=CreateSimpleResponse(403)
   assert.Equal(t,uint16(403),response.Status)
 
-  response=CreateSimpleResponse(999);
-  assert.Nil(t,response);
+  response=CreateSimpleResponse(999)
+  assert.Nil(t,response)
 }
 
 

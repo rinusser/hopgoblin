@@ -12,7 +12,7 @@ import (
 )
 
 
-var basedir_cache string=""
+var cachedBaseDir string=""
 
 /*
   Assembles a resource directory path. The returned path will include a trailing path separator, e.g. "\" in Windows.
@@ -32,16 +32,16 @@ func GetResourceDir(subdir string) string {
 func GetResourceBaseDir() string {
   limit:=3
 
-  if len(basedir_cache)>0 {
-    return basedir_cache
+  if len(cachedBaseDir)>0 {
+    return cachedBaseDir
   }
   traversal:=fmt.Sprintf("..%c",os.PathSeparator)
   for tc:=0;tc<=limit;tc++ {
     prefix:=strings.Repeat(traversal,tc)
     if lookForResourcesIn(prefix) {
-      basedir_cache=fmt.Sprintf("%s%s%c",prefix,"resources",os.PathSeparator)
-      log.Debug("found resource basedir: \"%s\"",basedir_cache)
-      return basedir_cache
+      cachedBaseDir=fmt.Sprintf("%s%s%c",prefix,"resources",os.PathSeparator)
+      log.Debug("found resource basedir: \"%s\"",cachedBaseDir)
+      return cachedBaseDir
     }
   }
   panic("could not locate resources/ directory")

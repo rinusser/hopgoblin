@@ -32,7 +32,7 @@ func (h ServerTestProxySiteHandler) HandlesHost(host string) bool {
 
 func (h ServerTestProxySiteHandler) HandleRequest(server *Server, browserio *bufio.ReadWriter, request *Request) {
   log.Debug("handling request")
-  log.Trace("request.is_ssl=%t",request.Is_ssl)
+  log.Trace("request.IsSSL=%t",request.IsSSL)
   client:=NewClient()
   client.CopyProxySettings(server)
   response,err:=client.ForwardRequest(*request)
@@ -57,7 +57,7 @@ func (h ServerTestDirectSiteHandler) HandlesHost(host string) bool {
 
 func (h ServerTestDirectSiteHandler) HandleRequest(server *Server, browserio *bufio.ReadWriter, request *Request) {
   log.Debug("received %s request to %s",request.Method,request.Url)
-  log.Trace("request.is_ssl=%t",request.Is_ssl)
+  log.Trace("request.IsSSL=%t",request.IsSSL)
   response:=NewResponse()
   response.Status=200
   if strings.Index(request.Url,"/no_encoding")>=0 {
@@ -321,7 +321,7 @@ func openAbortedConnection(t *testing.T, port int, num int) {
   time.Sleep(5e8)
   log.Trace("running step %d...",step)
   tlsconn.Write([]byte("\r\nHost: proxied.local\r\n\r\n"))
-  log.Trace("force closing connection...");
+  log.Trace("force closing connection...")
   tlsconn.Close()
   conn.Close()
   time.Sleep(5e9)

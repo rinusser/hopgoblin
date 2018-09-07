@@ -44,7 +44,7 @@ func init() {
  */
 func getEffectiveLevel(settings Settings, function string) Level {
   for _,prefix:=range settings.getSortedPrefixes() {
-    if strings.Index(function,prefix)==0 {
+    if strings.Index(function,prefix)==0 { //TODO: change to strings.HasPrefix()
       return settings.Prefixes[prefix]
     }
   }

@@ -55,7 +55,7 @@ func TestCertificateVerificationSetting(t *testing.T) {
   request:=Request {
     Method:"GET",
     Url:"/no_encoding/certcheck",
-    Is_ssl:true,
+    IsSSL:true,
     message: message {
       Protocol: "HTTP/1.1",
       Headers: NewHeaders(),
@@ -64,7 +64,7 @@ func TestCertificateVerificationSetting(t *testing.T) {
 
   client.EnableCertificateVerification=true
   request.Headers.Set("Host","invalidhost.localhost")
-  response,err:=client.ForwardRequest(request);
+  response,err:=client.ForwardRequest(request)
 
   assert.NotNil(t,err)
   err,ok:=err.(x509.HostnameError)
@@ -77,7 +77,7 @@ func TestCertificateVerificationSetting(t *testing.T) {
   client.ProxySettings.Port=proxyrunner.Port
   client.EnableCertificateVerification=true
   request.Headers.Set("Host","proxied.local")
-  response,err=client.ForwardRequest(request);
+  response,err=client.ForwardRequest(request)
 
   assert.Nil(t,err)
   assert.NotNil(t,response)

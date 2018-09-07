@@ -202,7 +202,7 @@ func (server *Server) handleConnection(conn net.Conn) {
  */
 func (this *Server) UpgradeServerConnectionToSSL(conn net.Conn, host string) (net.Conn,*bufio.ReadWriter,error) {
   var tlsconn *tls.Conn
-  tlsconfig:=*(&this.tlsconfig)
+  tlsconfig:=*(&this.tlsconfig) //TODO: this is a bug, it doesn't make a copy as intended
   tlsconfig.ServerName=host
   tlsconn=tls.Server(conn,&tlsconfig)
   log.Debug("performing TLS handshake...")
@@ -229,7 +229,7 @@ func (server *Server) startSSLServer(conn net.Conn, host string) (*bufio.ReadWri
     log.Debug("could not read TLS'd request: %s",err)
     return nil,nil,err
   }
-  request.Is_ssl=true
+  request.IsSSL=true
   return buf,request,nil
 }
 

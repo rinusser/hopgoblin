@@ -93,7 +93,7 @@ func (client *Client) ForwardRequest(request Request) (*Response,error) {
   request.Headers.Set("Connection","close")
   buf:=bufio.NewReadWriter(bufio.NewReader(conn),bufio.NewWriter(conn))
 
-  if request.Is_ssl {
+  if request.IsSSL {
     log.Trace("handling https request, establishing tunnel through proxy..")
     host,found:=request.Headers.Get("Host")
     if !found {

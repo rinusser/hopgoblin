@@ -10,11 +10,25 @@ check_test_files_documentation=0
 findcmd=/usr/bin/find
 sortcmd=/usr/bin/sort
 
+rv=0
+
+
+check_eol_semicolons() {
+  echo "checking for end-of-line semicolons..."
+  matches=`$findcmd . -name '*.go' | xargs grep --color=always -Eni ';$'`
+    if [ "$matches" != "" ]; then
+      rv=1
+      echo "$matches"
+    fi
+  echo "...done"
+  echo
+}
 
 check_imports_grouping() {
   echo "checking import grouping..."
   invalid=`$findcmd * -name '*.go' ! -name 'doc.go' | xargs grep -l import | xargs grep -L "import ("`
   for file in $invalid; do
+    rv=1
     echo "  INVALID: $file"
   done
   echo "...done"
@@ -41,6 +55,7 @@ check_imports_order() {
     if [ "$actual" == "$expected" ]; then
       echo -n .
     else
+      rv=1
       echo -e "\n  WRONG ORDER: $file"
       echo "    actual:   $actual"
       echo "    expected: $expected"
@@ -54,7 +69,10 @@ check_imports_order() {
 check_init_test() {
   echo "checking for init_test.go files..."
   for dir in `$findcmd . -name '*_test.go' | xargs dirname | $sortcmd | uniq`; do
-    [ -e "$dir/init_test.go" ] || echo "  MISSING: $dir/init_test.go"
+    if [ ! -e "$dir/init_test.go" ]; then
+      rv=1
+      echo "  MISSING: $dir/init_test.go"
+    fi
   done
   echo "...done"
   echo
@@ -63,7 +81,10 @@ check_init_test() {
 check_package_docs() {
   echo "checking for doc.go files..."
   for dir in `$findcmd . -name '*.go' | xargs grep -L "package main"  | xargs dirname | $sortcmd | uniq`; do
-    [ -e "$dir/doc.go" ] || echo "  MISSING: $dir/doc.go"
+    if [ ! -e "$dir/doc.go" ]; then
+      rv=1
+      echo "  MISSING: $dir/doc.go"
+    fi
   done
   echo "...done"
   echo
@@ -107,6 +128,7 @@ check_missing_docblocks() {
     if [[ "$prevline" == "*/" ]]; then
       log_ok "$logline"
     else
+      rv=1
       log_missing "$logline"
     fi
   done
@@ -121,7 +143,10 @@ check_file_headers() {
   expected=`echo -ne "// Copyright 2018 Richard Nusser\n// Licensed under GPLv3 (see http://www.gnu.org/licenses/)\n\n"`
   for file in `$findcmd . -name '*.go'`; do
     actual=`head -n3 $file | tr -d '\r'`
-    [ "$expected" == "$actual" ] || echo "  WRONG HEADER: $file"
+    if [ "$expected" != "$actual" ]; then
+      rv=1
+      echo "  WRONG HEADER: $file"
+    fi
   done
   echo "...done"
   echo
@@ -130,6 +155,7 @@ check_file_headers() {
 
 [ -f check-private.sh ] && ./check-private.sh
 
+check_eol_semicolons
 check_imports_grouping
 check_imports_order
 check_init_test
@@ -137,3 +163,4 @@ check_package_docs
 check_missing_docblocks
 check_file_headers
 
+exit $rv

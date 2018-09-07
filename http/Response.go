@@ -21,7 +21,7 @@ type Response struct {
   message
 }
 
-var status_messages = map[uint16]string {
+var statusMessages = map[uint16]string {
   200:"OK",
   403:"Forbidden",
   404:"Not Found",
@@ -45,7 +45,7 @@ func NewResponse() *Response {
   Creates a new HTTP instance with the given status code and a rudimentary content body.
  */
 func CreateSimpleResponse(code uint16) *Response {
-  status_text,found:=status_messages[code];
+  status_text,found:=statusMessages[code]
   if !found {
     log.Error("response code %d unknown",code)
     return nil
@@ -79,7 +79,7 @@ func ParseResponse(input string) Response {
  */
 func (response *Response) ToString() string {
   var rvs strings.Builder
-  status_text,found:=status_messages[response.Status]
+  status_text,found:=statusMessages[response.Status]
   if !found {
     status_text="UNHANDLED"
   }

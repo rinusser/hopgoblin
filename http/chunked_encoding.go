@@ -88,7 +88,7 @@ func chunkDecodeBody(in *bufio.Reader, data_out *bytes.Buffer, encoding_out *byt
 
     if chunk_size==0 {
       log.Trace("handled end chunk, stopping read")
-      break;
+      break
     }
   }
 
