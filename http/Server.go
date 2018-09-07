@@ -93,17 +93,16 @@ func (this *Server) AddAllRegisteredSiteHandlers() {
 
 
 /*
-  Starts listening to incoming connections on the given port.
+  Starts listening to incoming connections on the given local address.
 
   This method won't return until a boolean "true" is received sent over the Server.Shutdown channel.
  */
-func (server *Server) Listen(port uint16) error {
+func (server *Server) Listen(addr *net.TCPAddr) error {
   var err error
-  addr:=net.TCPAddr{net.IPv4(127,0,0,1),int(port),""}
-  listener,err:=net.ListenTCP("tcp",&addr)
+  listener,err:=net.ListenTCP("tcp",addr)
   server.listener=listener
   if err!=nil {
-    log.Fatal("unable to listen on port %d",port)
+    log.Fatal("unable to listen: %s",err)
     return err
   }
   log.Debug("listening on %s.\n",listener.Addr().String())

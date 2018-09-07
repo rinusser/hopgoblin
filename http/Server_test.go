@@ -83,7 +83,8 @@ func runServer(port int) (*Server, *go_http.Client) {
   server:=NewServer()
   server.AddSiteHandler(ServerTestProxySiteHandler{})
   server.AddSiteHandler(ServerTestDirectSiteHandler{})
-  go server.Listen(uint16(port))
+  addr:=net.TCPAddr{net.IPv4(127,0,0,1),port,"tcp"}
+  go server.Listen(&addr)
 
   proxy_url:=fmt.Sprintf("http://127.0.0.1:%d",port)
   os.Setenv("http_proxy", proxy_url)
