@@ -101,7 +101,13 @@ func (client *Client) ForwardRequest(request Request) (*Response,error) {
       return nil,nil
     }
 
-    response,err:=sendHTTPStringAndParseResponse("CONNECT "+host+":443 HTTP/1.1\r\n\r\n",buf)
+    portstr:=":443"
+    colonpos:=strings.Index(host,":")
+    if colonpos>0 {
+      portstr=host[colonpos:]
+      host=host[0:colonpos]
+    }
+    response,err:=sendHTTPStringAndParseResponse("CONNECT "+host+portstr+" HTTP/1.1\r\n\r\n",buf)
     if err!=nil {
       log.Error("could not communicate with proxy: %s",err)
       return nil,nil

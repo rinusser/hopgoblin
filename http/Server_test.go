@@ -36,7 +36,10 @@ func (h ServerTestProxySiteHandler) HandleRequest(server *Server, browserio *buf
   client:=NewClient()
   client.CopyProxySettings(server)
   response,err:=client.ForwardRequest(*request)
-  if err!=nil { panic(err) }
+  if err!=nil {
+    log.Fatal("could not forward request")
+    panic(err)
+  }
   server.WriteAndFlush(browserio,response.ToString())
 }
 
@@ -167,53 +170,67 @@ func runServerDirectAssertions(t *testing.T, client *go_http.Client, port int, u
 }
 
 
-/*
-  Makes sure HTTP requests forwarded by the site handler are working correctly.
- */
-func TestServerHTTPProxy(t *testing.T) {
-  expected:=[]string{"POST http://proxied.local/asdf HTTP/1.1"}
-  expected_body:="some/body"
-  runServerProxyTest(t,64085,"http://proxied.local/asdf",expected,&expected_body)
+type serverProxyTestCase struct {
+  url string
+  expected_body *string
+  expected_requests []string
+  description string
 }
 
-/*
-  Makes sure HTTPS requests forwarded by the site handler are working correctly.
- */
-func TestServerHTTPSProxy(t *testing.T) {
-  expected:=[]string{
-    "CONNECT proxied.local:443 HTTP/1.1",
-    "POST /asdf HTTP/1.1",
+func TestServerHTTPProxyCases(t *testing.T) {
+  body:="some/body"
+  cases:=[]serverProxyTestCase {
+    {
+      "http://proxied.local/asdf",
+      &body,
+      []string { "POST http://proxied.local/asdf HTTP/1.1" },
+      "basic HTTP",
+    },
+    {
+      "https://proxied.local/asdf",
+      &body,
+      []string { "CONNECT proxied.local:443 HTTP/1.1", "POST /asdf HTTP/1.1" },
+      "basic HTTPS",
+    },
+    {
+      "http://proxied.local:12344/otherport",
+      &body,
+      []string { "POST http://proxied.local:12344/otherport HTTP/1.1" },
+      "non-standard HTTP port",
+    },
+    {
+      "https://proxied.local:12344/otherport",
+      &body,
+      []string { "CONNECT proxied.local:12344 HTTP/1.1", "POST /otherport HTTP/1.1" },
+      "non-standard HTTPS port",
+    },
+    {
+      "http://proxied.local/chunked/fdsa",
+      &body,
+      []string { "POST http://proxied.local/chunked/fdsa HTTP/1.1" },
+      "chunked HTTP",
+    },
+    {
+      "https://proxied.local/chunked/fdsa",
+      &body,
+      []string { "CONNECT proxied.local:443 HTTP/1.1", "POST /chunked/fdsa HTTP/1.1" },
+      "chunked HTTPS",
+    },
   }
-  expected_body:="some/body"
-  runServerProxyTest(t,64087,"https://proxied.local/asdf",expected,&expected_body)
-}
 
-/*
-  Makes sure HTTP requests with a chunked response are working correctly.
- */
-func TestServerHTTPProxyChunked(t *testing.T) {
-  expected:=[]string{"POST http://proxied.local/chunked/fdsa HTTP/1.1"}
-  expected_body:="some/body"
-  runServerProxyTest(t,64088,"http://proxied.local/chunked/fdsa",expected,&expected_body)
-}
-
-/*
-  Makes sure HTTPS requests with a chunked response are working correctly.
- */
-func TestServerHTTPSProxyChunked(t *testing.T) {
-  expected:=[]string{
-    "CONNECT proxied.local:443 HTTP/1.1",
-    "POST /chunked/fdsa HTTP/1.1",
+  port:=64120
+  for _,c:=range cases {
+    runServerProxyTest(t,port,c)
+    port++
   }
-  expected_body:="some/body"
-  runServerProxyTest(t,64089,"https://proxied.local/chunked/fdsa",expected,&expected_body)
 }
 
-func runServerProxyTest(t *testing.T, port int, url string, expected []string, expected_body *string) {
+
+func runServerProxyTest(t *testing.T, port int, c serverProxyTestCase) {
   server,client:=runServer(port)
   defer func() { server.Shutdown<-true }()
-  if !server.SupportsEncryption && url[0:8]=="https://" {
-    log.Warn("skipping test case: encryption not supported")
+  if !server.SupportsEncryption && c.url[0:8]=="https://" {
+    log.Warn("skipping test case '"+c.description+"': encryption not supported")
     return
   }
 
@@ -225,10 +242,10 @@ func runServerProxyTest(t *testing.T, port int, url string, expected []string, e
 
   log.Trace("starting http POST..")
   postbody:="some/body"
-  result,err:=client.Post(url,"text/plain",strings.NewReader(postbody))
+  result,err:=client.Post(c.url,"text/plain",strings.NewReader(postbody))
   defer result.Body.Close()
   log.Trace("finished http POST")
-  assert.Nil(t,err,"http.Post() failed")
+  assert.Nil(t,err,"http.Post() should have succeeded: "+c.description)
 
   proxyresult,proxyerrout,err:=proxyrunner.ReadAndWait()
   if len(proxyerrout)>0 {
@@ -239,14 +256,14 @@ func runServerProxyTest(t *testing.T, port int, url string, expected []string, e
     log.Error("%v",err)
     panic(err)
   }
-  assert.Equal(t,418,result.StatusCode)
+  assert.Equal(t,418,result.StatusCode,"status code: "+c.description)
 
   request_lines:=findRequestLines(strings.TrimSpace(string(proxyresult)))
-  assert.Equal(t,expected,request_lines)
+  assert.Equal(t,c.expected_requests,request_lines,"request lines: "+c.description)
 
-  if expected_body!=nil {
+  if c.expected_body!=nil {
     last_body:=findLastBody(string(proxyresult))
-    assert.Equal(t,*expected_body,last_body)
+    assert.Equal(t,*c.expected_body,last_body,"body: "+c.description)
   }
 }
 
