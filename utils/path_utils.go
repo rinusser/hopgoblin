@@ -6,7 +6,6 @@ package utils
 import (
   "fmt"
   "os"
-  "runtime"
   "strings"
   "github.com/rinusser/hopgoblin/log"
 )
@@ -14,37 +13,41 @@ import (
 
 var cachedBaseDir string=""
 
-/*
-  Assembles a resource directory path. The returned path will include a trailing path separator, e.g. "\" in Windows.
 
-  Doesn't check if the directory actually exists.
+/*
+  Assembles a path string relative to the application's base directory.
+  Returned paths do not include a trailing path separator, so this will work with files and directories.
+
+  Will panic if base directory can't be determined.
  */
-func GetResourceDir(subdir string) string {
-  return fmt.Sprintf("%s%s%c",GetResourceBaseDir(),subdir,os.PathSeparator)
+func GetRelativePath(relative string) string {
+  return GetBaseDir()+relative
 }
 
 /*
-  Finds the resource base directory.
-  Test binaries are executed in their package directory, so this traverses the directory tree up until "resources/" is found.
+  Determines the application's base directory.
+  This function will traverse the directory tree up until a "resources" subdirectory is found. This works with the main binary,
+  test binaries and binaries in other packages.
 
   Will panic if number of parent directory traversals exceeds limit (currently 3 at most)
  */
-func GetResourceBaseDir() string {
+func GetBaseDir() string {
   limit:=3
 
   if len(cachedBaseDir)>0 {
     return cachedBaseDir
   }
+
   traversal:=fmt.Sprintf("..%c",os.PathSeparator)
   for tc:=0;tc<=limit;tc++ {
-    prefix:=strings.Repeat(traversal,tc)
-    if lookForResourcesIn(prefix) {
-      cachedBaseDir=fmt.Sprintf("%s%s%c",prefix,"resources",os.PathSeparator)
-      log.Debug("found resource basedir: \"%s\"",cachedBaseDir)
+    candidate:=strings.Repeat(traversal,tc)
+    if lookForResourcesIn(candidate) {
+      log.Debug("found basedir: \"%s\"",candidate)
+      cachedBaseDir=candidate
       return cachedBaseDir
     }
   }
-  panic("could not locate resources/ directory")
+  panic("could not determine base directory")
 }
 
 func lookForResourcesIn(prefix string) bool {
@@ -54,25 +57,23 @@ func lookForResourcesIn(prefix string) bool {
 
 
 /*
-  Returns the application's main directory. Binaries are expected to reside there.
+  Assembles a resource directory path. The returned path won't include a trailing path separator, e.g. "\" in Windows, so make sure
+  you append it yourself if needed.
+
+  Doesn't check if the target actually exists.
  */
-func GetApplicationDir() string {
-  return GetResourceDir("../build")
+func GetResourcePath(path string) string {
+  return fmt.Sprintf("%s%c%s",GetRelativePath("resources"),os.PathSeparator,path)
 }
 
 
 /*
-  Turns a sourcefile-relative path into an absolute path for file I/O.
-  If the resulting path should be used as a directory, make sure to append the path separator to the resulting string before
-  appending adding a file name.
-
-  This function won't check if the relative path points to an existing file system entry, it just creates the new path string.
+  Returns the application's executables directory. Binaries are expected to reside there.
  */
-func ResolveRelativePath(path string) string {
-  _,file,_,_:=runtime.Caller(1)
-  dir:=dirname(file)
-  return dir+path
+func GetApplicationDir() string {
+  return fmt.Sprintf("%s%c",GetRelativePath("build"),os.PathSeparator)
 }
+
 
 func dirname(path string) string {
   end:=strings.LastIndex(path,string(os.PathSeparator))

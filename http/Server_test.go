@@ -44,7 +44,7 @@ func (h ServerTestProxySiteHandler) HandleRequest(server *Server, browserio *buf
 }
 
 func (this ServerTestProxySiteHandler) GetCertificateMap() map[string]*tls.Certificate {
-  cert:=utils.LoadCertificate(utils.GetResourceDir("certs"),"test")
+  cert:=utils.LoadCertificate(utils.GetResourcePath("certs"),"test")
   return map[string]*tls.Certificate {
     "proxied.local":cert,
   }
@@ -75,7 +75,7 @@ func (h ServerTestDirectSiteHandler) HandleRequest(server *Server, browserio *bu
 }
 
 func (this ServerTestDirectSiteHandler) GetCertificateMap() map[string]*tls.Certificate {
-  cert:=utils.LoadCertificate(utils.GetResourceDir("certs"),"test")
+  cert:=utils.LoadCertificate(utils.GetResourcePath("certs"),"test")
   return map[string]*tls.Certificate {
     "direct.local":cert,
   }

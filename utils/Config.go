@@ -16,7 +16,7 @@ func init() {
 }
 
 func initHook() {
-  appConfiguration=ParseINIFile(GetResourceBaseDir()+"application.ini")
+  appConfiguration=ParseINIFile(GetResourcePath("application.ini"))
 }
 
 

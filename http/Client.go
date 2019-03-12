@@ -147,7 +147,7 @@ func GetCertificatePool() *x509.CertPool {
       caCertPool=x509.NewCertPool()
     }
 
-    certspath:=utils.GetResourceDir("certs")
+    certspath:=utils.GetResourcePath("certs")
     certsdir,err:=os.Open(certspath)
     if err!=nil { panic(err) }
     defer certsdir.Close()
@@ -157,7 +157,7 @@ func GetCertificatePool() *x509.CertPool {
       if strings.Index(certname,"CA-")!=0 {
         continue
       }
-      certs,err:=ioutil.ReadFile(certspath+certname)
+      certs,err:=ioutil.ReadFile(fmt.Sprintf("%s%c%s",certspath,os.PathSeparator,certname))
       if err!=nil || !caCertPool.AppendCertsFromPEM(certs) {
         log.Warn("could not load CA certificate %s",certname)
       } else {

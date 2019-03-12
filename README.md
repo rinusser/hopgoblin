@@ -2,6 +2,8 @@
 
 A custom HTTP/HTTPS proxy supporting per-site plugins. This application is NOT intended as a general-purpose proxy server for day-to-day browsing.
 
+The sources are hosted on [GitHub](https://github.com/rinusser/hopgoblin).
+
 
 # General
 
@@ -121,7 +123,7 @@ required):
 
 ### Copyright
 
-Copyright (C) 2018 Richard Nusser
+Copyright (C) 2018-2019 Richard Nusser
 
 ### License
 

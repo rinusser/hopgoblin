@@ -46,7 +46,7 @@ func NewServer() *Server {
 
 func (this *Server) loadTLSConfig() {
   this.SupportsEncryption=false
-  resdir:=utils.GetResourceDir("certs")
+  resdir:=utils.GetResourcePath("certs")
   certname:=utils.GetConfigValue("server.default_certificate_file")
   if certname=="" {
     log.Warn("no default TLS certificate name set, disabling encryption support")
